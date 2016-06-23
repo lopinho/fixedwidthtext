@@ -1,0 +1,12 @@
+actionid: tox
+msg: packaging
+cmdargs: ['/Users/andreferreira/.virtualenvs/fixedwidth/bin/python', local('/Users/andreferreira/learning/fixedwidth/setup.py'), 'sdist', '--formats=zip', '--dist-dir', local('/Users/andreferreira/learning/fixedwidth/.tox/dist')]
+env: None
+
+running sdist
+running check
+warning: sdist: manifest template 'MANIFEST.in' does not exist (using default file list)
+
+warning: sdist: standard file not found: should have one of README, README.txt
+
+error: package directory 'fixedwidthtext' does not exist
