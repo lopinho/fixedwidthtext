@@ -9,4 +9,17 @@ warning: sdist: manifest template 'MANIFEST.in' does not exist (using default fi
 
 warning: sdist: standard file not found: should have one of README, README.txt
 
-error: package directory 'fixedwidthtext' does not exist
+writing manifest file 'MANIFEST'
+creating fixedwidthtext-0.1
+creating fixedwidthtext-0.1/fixedwidthtext
+making hard links in fixedwidthtext-0.1...
+hard linking setup.py -> fixedwidthtext-0.1
+hard linking fixedwidthtext/__init__.py -> fixedwidthtext-0.1/fixedwidthtext
+hard linking fixedwidthtext/fields.py -> fixedwidthtext-0.1/fixedwidthtext
+creating .tox/dist
+creating '.tox/dist/fixedwidthtext-0.1.zip' and adding 'fixedwidthtext-0.1' to it
+adding 'fixedwidthtext-0.1/PKG-INFO'
+adding 'fixedwidthtext-0.1/setup.py'
+adding 'fixedwidthtext-0.1/fixedwidthtext/__init__.py'
+adding 'fixedwidthtext-0.1/fixedwidthtext/fields.py'
+removing 'fixedwidthtext-0.1' (and everything under it)
