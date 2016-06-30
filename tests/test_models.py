@@ -40,7 +40,7 @@ class TestLineManager(unittest.TestCase):
     def test_should_create_fields_in_meta_with_right_order(self):
         self.assertTrue(hasattr(self.parser._meta, 'fields'))
         self.assertEqual(
-            self.parser._meta.fields.keys(),
+            list(self.parser._meta.fields.keys()),
             ['first_name', 'last_name', 'age',
              'date_joined', 'time_joined', 'bank_balance'])
 

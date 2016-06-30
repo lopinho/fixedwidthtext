@@ -1,6 +1,9 @@
 # coding: utf-8
 import datetime
 import decimal
+import unicodedata
+
+import six
 
 from fixedwidthtext import exceptions
 
@@ -12,14 +15,14 @@ class Field(object):
     default_error_messages = {
         'invalid_choice': 'Value %r is not a valid choice.',
         'null': 'This field cannot be null.',
-        'blank': 'This field cannot be blank.',
-    }
+        'blank': 'This field cannot be blank.'}
 
     def _init_validate(self):
         if self.size is None:
             raise exceptions.ValidationError('Size cannot be null.')
 
     def __init__(self, **kwargs):
+        self.normalize = kwargs.get('normalize', False)
         self.name = kwargs.get('name', None)
         self.verbose_name = kwargs.get('verbose_name', None)
         self.size = kwargs.get('size', None)
@@ -43,7 +46,7 @@ class Field(object):
     def to_python(self, value):
         """
         Converts the input value into the expected Python data type, raising
-        fixedwidthtext.exceptions.ValidationError if the data can't be converted.
+        exceptions.ValidationError if the data can't be converted.
         Returns the converted value. Subclasses should implement this.
         """
         raise NotImplementedError('Need to implement to_python.')
@@ -79,11 +82,23 @@ class Field(object):
             return str(self.default)
         return None
 
+    def _check_encoding(self, value):
+        if six.PY3 is False:
+            value = value.encode('utf-8')
+        if self.normalize:
+            value = unicodedata.normalize('NFKD', value).encode(
+                'ascii', 'ignore')
+        return value
+
     def value_to_string(self, obj):
         """
         Returns a string value of this field from the passed obj.
         Subclasses should implement this.
         """
+        value = self._value_to_string(obj)
+        return self._check_encoding(value)
+
+    def _value_to_string(self, obj):
         raise NotImplementedError('Need to implement value_to_string.')
 
     def validate(self, value):
@@ -123,8 +138,8 @@ class Field(object):
                 if hasattr(e, 'code') and e.code in self.error_messages:
                     message = self.error_messages[e.code]
                     if e.params:
-                        mesage = message % e.params
-                    error.append(message)
+                        message = message % e.params
+                    errors.append(message)
                 else:
                     errors.extend(e.messages)
         if errors:
@@ -144,13 +159,13 @@ class Field(object):
 class DateField(Field):
     default_error_messages = {
         'invalid': "'%s' value has an invalid date format. It must be "
-                     "in 'YYYYMMDD' formated string or instance of decimal.Decimal.",
+        "in 'YYYYMMDD' formated string or instance of decimal.Decimal.",
         'invalid_date': "'%s' value has the correct format (YYYYMMDD) "
-                          "but it is an invalid date.",
-    }
-    def value_to_string(self, obj):
+        "but it is an invalid date."}
+
+    def _value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-        return value.strftime('%Y%m%d')
+        return self._check_encoding(value.strftime('%Y%m%d'))
 
     def to_python(self, value):
         if isinstance(value, datetime.datetime):
@@ -164,13 +179,14 @@ class DateField(Field):
             msg = self.error_messages['invalid'] % value
             raise exceptions.ValidationError(msg)
 
+
 class TimeField(Field):
     default_error_messages = {
         'invalid': "'%s' value has an invalid format. It must be in "
-                     "HH:MM[:ss[.uuuuuu]] format.",
+        "HH:MM[:ss[.uuuuuu]] format.",
         'invalid_time': "'%s' value has the correct format "
-                          "(HH:MM[:ss[.uuuuuu]]) but it is an invalid time.",
-    }
+        "(HH:MM[:ss[.uuuuuu]]) but it is an invalid time."}
+
     def to_python(self, value):
         if value is None:
             return None
@@ -190,16 +206,16 @@ class TimeField(Field):
             msg = self.error_messages['invalid_time'] % value
             raise exceptions.ValidationError(msg)
 
-    def value_to_string(self, obj):
+    def _value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
         return value.strftime("%H%M")
 
 
 class IntegerField(Field):
     default_error_messages = {
-        'invalid': "'%s' value must be an integer or string.",
-    }
-    def value_to_string(self, obj):
+        'invalid': "'%s' value must be an integer or string."}
+
+    def _value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
         mask = '%0' + str(self.size) + 'd'
         return mask % value
@@ -207,7 +223,7 @@ class IntegerField(Field):
     def to_python(self, value):
         if isinstance(value, int):
             return value
-        if isinstance(value, (str, unicode, decimal.Decimal)) is False:
+        if isinstance(value, six.string_types) is False:
             raise exceptions.ValidationError(
                 self.error_messages['invalid'] % value)
         try:
@@ -219,9 +235,9 @@ class IntegerField(Field):
 
 class CharField(Field):
     default_error_messages = {
-        'invalid': "'%s' value must be an String.",
-    }
-    def value_to_string(self, obj):
+        'invalid': "'%s' value must be an String."}
+
+    def _value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
         current_size = len(value)
         if current_size <= self.size:
@@ -231,10 +247,11 @@ class CharField(Field):
     def to_python(self, value):
         if isinstance(value, int):
             value = str(value)
-        if isinstance(value, (str, unicode)) is False:
+        if isinstance(value, six.string_types) is False:
             msg = self.error_messages['invalid'] % value
             raise exceptions.ValidationError(msg)
         return value.strip()
+
 
 class StringField(CharField):
     pass
@@ -242,15 +259,15 @@ class StringField(CharField):
 
 class DecimalField(Field):
     default_error_messages = {
-        'invalid': "'%s' value must be a decimal number.",
-    }
+        'invalid': "'%s' value must be a decimal number."}
 
     def __init__(self, **kwargs):
         super(DecimalField, self).__init__(**kwargs)
         self.decimal_places = kwargs.get('decimal_places', None)
 
-    def value_to_string(self, obj):
-        value = str(self._get_val_from_obj(obj).quantize(decimal.Decimal('0.01')))
+    def _value_to_string(self, obj):
+        value = str(
+            self._get_val_from_obj(obj).quantize(decimal.Decimal('0.01')))
         value = int(value.replace('.', '').replace(',', ''))
         mask = '%0' + str(self.size) + 'd'
         return mask % value

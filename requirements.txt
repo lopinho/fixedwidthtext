@@ -4,3 +4,4 @@ py==1.4.31
 tox==2.3.1
 virtualenv==15.0.2
 wsgiref==0.1.2
+six

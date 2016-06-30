@@ -1,16 +1,12 @@
 # coding: utf-8
-import datetime
-import decimal
 from collections import OrderedDict
+import six
 
 from fixedwidthtext import exceptions
 from fixedwidthtext.fields import Field
 
 RESERVED_FIELD_NAMES = ['line']
 
-def with_metaclass(meta, base=object):
-    """Create a base class with a metaclass."""
-    return meta("NewBase", (base,), {})
 
 class Options(object):
     def __init__(self, attrs):
@@ -35,7 +31,8 @@ class Options(object):
             if isinstance(field, Field):
                 if name in RESERVED_FIELD_NAMES:
                     raise exceptions.ValidationError(
-                        '%s in reserved names, please chose another name.' % name)
+                        '%s in reserved names, please chose another name.' %
+                        name)
                 field.name = name
 
     def _populate_fields(self, attrs):
@@ -43,6 +40,7 @@ class Options(object):
             lambda x: hasattr(x[1], 'creation_counter'), attrs.items())
         self.fields = OrderedDict(
             sorted(attrs, key=lambda x: x[1].creation_counter))
+
 
 class ModelBase(type):
     """
@@ -67,12 +65,11 @@ class ModelBase(type):
             new_class.add_to_class(obj_name, obj)
         return new_class
 
-
     def add_to_class(cls, name, value):
         setattr(cls, name, value)
 
 
-class LineManager(with_metaclass(ModelBase)):
+class LineManager(six.with_metaclass(ModelBase)):
     def __init__(self, **kwargs):
         if 'string' in kwargs:
             self._parse_and_populate(kwargs['string'])
