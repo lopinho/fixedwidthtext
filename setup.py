@@ -49,4 +49,7 @@ with open('README.rst') as f:
             'Programming Language :: Python :: 3.3',
             'Topic :: Software Development :: Libraries :: Python Modules',
         ],
+        install_requires=[
+            'six'
+        ]
     )
