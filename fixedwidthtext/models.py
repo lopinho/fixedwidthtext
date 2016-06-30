@@ -106,7 +106,7 @@ class LineManager(six.with_metaclass(ModelBase)):
             raw_value = getattr(self, field.name)
             try:
                 setattr(self, field.name, field.clean(raw_value, self))
-            except exceptions.ValidationError as e:
+            except Exception as e:
                 errors[field.name] = str(e)
         if errors:
             raise exceptions.ValidationError(repr(errors))

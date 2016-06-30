@@ -266,13 +266,16 @@ class DecimalField(Field):
         self.decimal_places = kwargs.get('decimal_places', None)
 
     def _value_to_string(self, obj):
-        value = str(
-            self._get_val_from_obj(obj).quantize(decimal.Decimal('0.01')))
+        value = self._get_val_from_obj(obj)
+        value = decimal.Decimal(str(value))
+        value = str(value.quantize(decimal.Decimal('0.01')))
         value = int(value.replace('.', '').replace(',', ''))
         mask = '%0' + str(self.size) + 'd'
         return mask % value
 
     def to_python(self, value):
+        if self.decimal_places is None:
+            raise exceptions.ValidationError('Need to set decimal_places')
         if value is None or isinstance(value, decimal.Decimal):
             return value
         try:
