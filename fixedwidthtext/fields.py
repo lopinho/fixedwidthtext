@@ -25,6 +25,7 @@ class Field(object):
         self.size = kwargs.get('size', None)
         self.choices = kwargs.get('choices', None)
         self.default = kwargs.get('default', None)
+        self.static_val = kwargs.get('static_val', None)
         self.validators = kwargs.get('validators', [])
         error_messages = kwargs.get('error_messages', None)
 
@@ -69,11 +70,14 @@ class Field(object):
         """
         Returns the default value for this field.
         """
+        if self.static_val is not None:
+            return self.static_val
+
         if self.has_default():
             if callable(self.default):
                 return self.default()
             return str(self.default)
-        return ""
+        return None
 
     def value_to_string(self, obj):
         """
@@ -91,9 +95,11 @@ class Field(object):
             msg = self.error_messages['invalid_size']
             raise exceptions.ValidationError(msg)
 
-        if self.choices and value not in choices:
-            msg = self.error_messages['invalid_choice'] % value
-            raise exceptions.ValidationError(msg)
+        if self.choices:
+            options = map(lambda x: x[0], self.choices)
+            if value not in options:
+                msg = self.error_messages['invalid_choice'] % value
+                raise exceptions.ValidationError(msg)
 
     def clean(self, value, model_instance):
         """
@@ -101,6 +107,8 @@ class Field(object):
         from to_python and validate are propagated. The correct value is
         returned if no error is raised.
         """
+        if value is None:
+            value = self.get_default()
         value = self.to_python(value)
         self.validate(value)
         self.run_validators(value)
@@ -123,16 +131,20 @@ class Field(object):
             raise exceptions.ValidationError(errors)
 
     def _get_val_from_obj(self, obj):
+        if self.static_val is not None:
+            return self.static_val
         if obj is not None:
-            return getattr(obj, self.name)
-        else:
-            return self.get_default()
+            attr = getattr(obj, self.name)
+            if attr is not None:
+                return getattr(obj, self.name)
+            else:
+                return self.get_default()
 
 
 class DateField(Field):
     default_error_messages = {
         'invalid': "'%s' value has an invalid date format. It must be "
-                     "in YYYYMMDD format.",
+                     "in 'YYYYMMDD' formated string or instance of decimal.Decimal.",
         'invalid_date': "'%s' value has the correct format (YYYYMMDD) "
                           "but it is an invalid date.",
     }
@@ -148,9 +160,40 @@ class DateField(Field):
         try:
             return datetime.date(
                 int(value[:4]), int(value[4:6]), int(value[6:]))
-        except ValueError:
+        except Exception:
             msg = self.error_messages['invalid'] % value
             raise exceptions.ValidationError(msg)
+
+class TimeField(Field):
+    default_error_messages = {
+        'invalid': "'%s' value has an invalid format. It must be in "
+                     "HH:MM[:ss[.uuuuuu]] format.",
+        'invalid_time': "'%s' value has the correct format "
+                          "(HH:MM[:ss[.uuuuuu]]) but it is an invalid time.",
+    }
+    def to_python(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime.time):
+            return value
+        if isinstance(value, datetime.datetime):
+            return value.time()
+        try:
+            if value is not None:
+                if len(value) is 4:
+                    parsed = datetime.time(int(value[:2]), int(value[2:]))
+                if len(value) is 6:
+                    parsed = datetime.time(
+                        int(value[:2]), int(value[2:4]), int(value[4:]))
+                return parsed
+        except ValueError:
+            msg = self.error_messages['invalid_time'] % value
+            raise exceptions.ValidationError(msg)
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return value.strftime("%H%M")
+
 
 class IntegerField(Field):
     default_error_messages = {
@@ -169,7 +212,7 @@ class IntegerField(Field):
             raise exceptions.ValidationError(msg)
 
 
-class StringField(Field):
+class CharField(Field):
     default_error_messages = {
         'invalid': "'%s' value must be an String.",
     }
@@ -181,10 +224,15 @@ class StringField(Field):
         return value[:self.size]
 
     def to_python(self, value):
+        if isinstance(value, int):
+            value = str(value)
         if isinstance(value, (str, unicode)) is False:
             msg = self.error_messages['invalid'] % value
             raise exceptions.ValidationError(msg)
         return value.strip()
+
+class StringField(CharField):
+    pass
 
 
 class DecimalField(Field):
@@ -197,13 +245,13 @@ class DecimalField(Field):
         self.decimal_places = kwargs.get('decimal_places', None)
 
     def value_to_string(self, obj):
-        value = str(self._get_val_from_obj(obj))
+        value = str(self._get_val_from_obj(obj).quantize(decimal.Decimal('0.01')))
         value = int(value.replace('.', '').replace(',', ''))
         mask = '%0' + str(self.size) + 'd'
         return mask % value
 
     def to_python(self, value):
-        if value is None:
+        if value is None or isinstance(value, decimal.Decimal):
             return value
         try:
             value = "%s.%s" % (

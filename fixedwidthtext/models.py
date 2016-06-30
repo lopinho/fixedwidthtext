@@ -4,6 +4,7 @@ import decimal
 from collections import OrderedDict
 
 from fixedwidthtext import exceptions
+from fixedwidthtext.fields import Field
 
 RESERVED_FIELD_NAMES = ['line']
 
@@ -31,10 +32,11 @@ class Options(object):
 
     def _add_fields_names(self, attrs):
         for name, field in attrs.items():
-            if name in RESERVED_FIELD_NAMES:
-                raise exceptions.ValidationError(
-                    '%s in reserved names, please chose another name.' % name)
-            field.name = name
+            if isinstance(field, Field):
+                if name in RESERVED_FIELD_NAMES:
+                    raise exceptions.ValidationError(
+                        '%s in reserved names, please chose another name.' % name)
+                field.name = name
 
     def _populate_fields(self, attrs):
         attrs = filter(
@@ -117,7 +119,7 @@ class LineManager(with_metaclass(ModelBase)):
         for field in self._meta.fields.values():
             string += field.value_to_string(self)
         return string
-    
+
     def get_dicts(self):
         dicts = []
         for field in self._meta.fields.values():
