@@ -197,7 +197,7 @@ class TimeField(Field):
 
 class IntegerField(Field):
     default_error_messages = {
-        'invalid': "'%s' value must be an integer.",
+        'invalid': "'%s' value must be an integer or string.",
     }
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
@@ -205,6 +205,11 @@ class IntegerField(Field):
         return mask % value
 
     def to_python(self, value):
+        if isinstance(value, int):
+            return value
+        if isinstance(value, (str, unicode, decimal.Decimal)) is False:
+            raise exceptions.ValidationError(
+                self.error_messages['invalid'] % value)
         try:
             return int(value)
         except ValueError:
