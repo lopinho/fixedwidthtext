@@ -38,7 +38,7 @@ with open('README.rst') as f:
         long_description=long_description,
         license='MIT',
         url="http://github.org/lopinho/fixedwidthtext",
-        version='0.1',
+        version='0.1.1',
         packages=['fixedwidthtext'],
         classifiers=[
             'Development Status :: 3 - Alpha',
