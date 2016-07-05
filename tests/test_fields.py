@@ -62,6 +62,11 @@ class TestStringField(TestField):
         self.assertEqual(response, self.str_value)
         self.assertEqual(len(response), self.field.size)
 
+    def test_value_to_string_should_return_correct_string(self):
+        response = self.field.value_to_string(self.object)
+        self.assertEqual(response, self.str_value)
+        self.assertEqual(len(response), self.field.size)
+
     def test_to_python_should_return_correct_string(self):
         response = self.field.to_python(self.str_value)
         self.assertEqual(response, self.value)
@@ -104,9 +109,19 @@ class TestIntegerField(TestField):
         self.field = IntegerField(**self._default_attr())
         self.object = self._object(40)
 
-    def test_value_to_string_should_return_correct_string(self):
+    def test_value_to_string_should_return_correct_string_with_integer(self):
         response = self.field.value_to_string(self.object)
         self.assertEqual(response, '0000000040')
+        self.assertEqual(len(response), 10)
+
+    def test_value_to_string_should_return_correct_string_with_decimal(self):
+        response = self.field.value_to_string(self._object(Decimal(50)))
+        self.assertEqual(response, '0000000050')
+        self.assertEqual(len(response), 10)
+
+    def test_value_to_string_should_return_correct_string_with_string(self):
+        response = self.field.value_to_string(self._object('49'))
+        self.assertEqual(response, '0000000049')
         self.assertEqual(len(response), 10)
 
     def test_to_python_should_return_correct_integer(self):
@@ -126,6 +141,21 @@ class TestDecimalField(TestField):
     def test_value_to_string_should_return_correct_string(self):
         response = self.field.value_to_string(self.object)
         self.assertEqual(response, '0000012345')
+        self.assertEqual(len(response), 10)
+
+    def test_value_to_string_should_return_correct_string_with_integer(self):
+        response = self.field.value_to_string(self._object(23))
+        self.assertEqual(response, '0000002300')
+        self.assertEqual(len(response), 10)
+
+    def test_value_to_string_should_return_correct_string_with_float(self):
+        response = self.field.value_to_string(self._object(23.55))
+        self.assertEqual(response, '0000002355')
+        self.assertEqual(len(response), 10)
+
+    def test_value_to_string_should_return_correct_string_with_string(self):
+        response = self.field.value_to_string(self._object('23.55'))
+        self.assertEqual(response, '0000002355')
         self.assertEqual(len(response), 10)
 
     def test_to_python_should_return_correct_decimal(self):

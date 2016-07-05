@@ -25,7 +25,7 @@ class Field(object):
         self.normalize = kwargs.get('normalize', False)
         self.name = kwargs.get('name', None)
         self.verbose_name = kwargs.get('verbose_name', None)
-        self.size = kwargs.get('size', None)
+        self.size = kwargs.get('size', kwargs.get('max_length', None))
         self.choices = kwargs.get('choices', None)
         self.default = kwargs.get('default', None)
         self.static_val = kwargs.get('static_val', None)
@@ -217,7 +217,7 @@ class IntegerField(Field):
         'invalid': "'%s' value must be an integer or string."}
 
     def _value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
+        value = int(self._get_val_from_obj(obj))
         mask = '%0' + str(self.size) + 'd'
         return mask % value
 
@@ -268,11 +268,15 @@ class DecimalField(Field):
 
     def _value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-        value = decimal.Decimal(str(value))
-        value = str(value.quantize(decimal.Decimal('0.01')))
-        value = int(value.replace('.', '').replace(',', ''))
-        mask = '%0' + str(self.size) + 'd'
-        return mask % value
+        try:
+            value = decimal.Decimal(str(value))
+            value = str(value.quantize(decimal.Decimal('0.01')))
+            value = int(value.replace('.', '').replace(',', ''))
+            mask = '%0' + str(self.size) + 'd'
+            return mask % value
+        except:
+            msg = self.error_messages['invalid'] % value
+            raise exceptions.ValidationError(msg)
 
     def to_python(self, value):
         if self.decimal_places is None:
