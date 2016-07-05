@@ -159,7 +159,7 @@ class Field(object):
 class DateField(Field):
     default_error_messages = {
         'invalid': "'%s' value has an invalid date format. It must be "
-        "in 'YYYYMMDD' formated string or instance of decimal.Decimal.",
+        "in 'YYYYMMDD' formated string or instance of datetime.",
         'invalid_date': "'%s' value has the correct format (YYYYMMDD) "
         "but it is an invalid date."}
 
@@ -172,6 +172,7 @@ class DateField(Field):
             return value.date()
         if isinstance(value, datetime.date):
             return value
+        print value.__class__
         try:
             return datetime.date(
                 int(value[:4]), int(value[4:6]), int(value[6:]))

@@ -72,7 +72,7 @@ class ModelBase(type):
 class LineManager(six.with_metaclass(ModelBase)):
     def __init__(self, **kwargs):
         if 'string' in kwargs:
-            self._parse_and_populate(kwargs['string'])
+            self._parse_and_populate(kwargs['string'].replace('\r', ''))
         else:
             self._populate_fields(kwargs)
         self.clean_fields()
