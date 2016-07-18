@@ -95,10 +95,11 @@ class Field(object):
         Returns a string value of this field from the passed obj.
         Subclasses should implement this.
         """
-        value = self._value_to_string(obj)
-        return self._check_encoding(value)
+        pyvalue = self._get_val_from_obj(obj)
+        strvalue = self._value_to_string(pyvalue)
+        return self._check_encoding(strvalue)
 
-    def _value_to_string(self, obj):
+    def _value_to_string(self, val):
         raise NotImplementedError('Need to implement value_to_string.')
 
     def validate(self, value):
@@ -163,8 +164,7 @@ class DateField(Field):
         'invalid_date': "'%s' value has the correct format (YYYYMMDD) "
         "but it is an invalid date."}
 
-    def _value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
+    def _value_to_string(self, value):
         return self._check_encoding(value.strftime('%Y%m%d'))
 
     def to_python(self, value):
@@ -207,8 +207,7 @@ class TimeField(Field):
             msg = self.error_messages['invalid_time'] % value
             raise exceptions.ValidationError(msg)
 
-    def _value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
+    def _value_to_string(self, value):
         return value.strftime("%H%M")
 
 
@@ -216,10 +215,9 @@ class IntegerField(Field):
     default_error_messages = {
         'invalid': "'%s' value must be an integer or string."}
 
-    def _value_to_string(self, obj):
-        value = int(self._get_val_from_obj(obj))
+    def _value_to_string(self, value):
         mask = '%0' + str(self.size) + 'd'
-        return mask % value
+        return mask % int(value)
 
     def to_python(self, value):
         if isinstance(value, int):
@@ -238,8 +236,7 @@ class CharField(Field):
     default_error_messages = {
         'invalid': "'%s' value must be an String."}
 
-    def _value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
+    def _value_to_string(self, value):
         current_size = len(value)
         if current_size <= self.size:
             return value + ' ' * (self.size - current_size)
@@ -266,8 +263,7 @@ class DecimalField(Field):
         super(DecimalField, self).__init__(**kwargs)
         self.decimal_places = kwargs.get('decimal_places', None)
 
-    def _value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
+    def _value_to_string(self, value):
         try:
             value = decimal.Decimal(str(value))
             value = str(value.quantize(decimal.Decimal('0.01')))
