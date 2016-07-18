@@ -109,6 +109,12 @@ class TestIntegerField(TestField):
         self.field = IntegerField(**self._default_attr())
         self.object = self._object(40)
 
+    def test_clean_value_bigger_then_expected_should_raise_error(self):
+        max_size = self.field.size
+        bigger = '1' * (max_size + 1)
+        with self.assertRaises(exceptions.ValidationError):
+            self.field.clean(bigger, self.object)
+
     def test_value_to_string_should_return_correct_string_with_integer(self):
         response = self.field.value_to_string(self.object)
         self.assertEqual(response, '0000000040')

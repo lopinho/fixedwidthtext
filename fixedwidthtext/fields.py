@@ -117,6 +117,16 @@ class Field(object):
                 msg = self.error_messages['invalid_choice'] % value
                 raise exceptions.ValidationError(msg)
 
+        str_value = self._value_to_string(value)
+        if len(str_value) > self.size:
+            raise exceptions.ValidationError('Wrong formated size, '
+                                             'max size: %s, '
+                                             'formated value: %s, '
+                                             'formated size: %s' % (
+                                                 self.size,
+                                                 str_value,
+                                                 len(str_value)))
+
     def clean(self, value, model_instance):
         """
         Convert the value's type and run validation. Validation errors
@@ -163,6 +173,10 @@ class DateField(Field):
         "in 'YYYYMMDD' formated string or instance of datetime.",
         'invalid_date': "'%s' value has the correct format (YYYYMMDD) "
         "but it is an invalid date."}
+
+    def __init__(self, **kwargs):
+        kwargs['size'] = 8
+        super(DateField, self).__init__(**kwargs)
 
     def _value_to_string(self, value):
         return self._check_encoding(value.strftime('%Y%m%d'))
