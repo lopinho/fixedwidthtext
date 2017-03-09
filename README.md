@@ -49,11 +49,14 @@ teste.get_dicts()
 teste.sequencial
 1
 
+teste.nome
+'Joao Ferreira'
+
 teste.salario
 Decimal('200.00')
 
 teste.nascimento
-Decimal('200.00')
+datetime.date(1999, 10, 1)
 ```
 
 ###Escrevendo linha
