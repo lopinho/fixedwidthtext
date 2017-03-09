@@ -186,7 +186,6 @@ class DateField(Field):
             return value.date()
         if isinstance(value, datetime.date):
             return value
-        print value.__class__
         try:
             return datetime.date(
                 int(value[:4]), int(value[4:6]), int(value[6:]))
@@ -201,6 +200,10 @@ class TimeField(Field):
         "HH:MM[:ss[.uuuuuu]] format.",
         'invalid_time': "'%s' value has the correct format "
         "(HH:MM[:ss[.uuuuuu]]) but it is an invalid time."}
+
+    def __init__(self, **kwargs):
+        kwargs['size'] = 4
+        super(TimeField, self).__init__(**kwargs)
 
     def to_python(self, value):
         if value is None:
