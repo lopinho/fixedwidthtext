@@ -1,13 +1,17 @@
-#Fixed Width Text
+# Fixed Width Text
 
 Biblioteca Python baseado no model do django para ler e escrever arquivos com tamanho de linha fixo.
 
-##instalação
+## Instalação
+
+```bash
 pip install fixedwidthtext
+```
 
+## Exemplo
 
-##Exemplo
-###Criando classe para ler/escrever
+### Criando classe para ler/escrever
+
 ```python
 import datetime
 
@@ -19,9 +23,10 @@ class Header(LineManager):
     nome = fields.CharField(max_length=30)
     nascimento = fields.DateField(default=datetime.datetime.now)
     salario = fields.DecimalField(size=8, decimal_places=2)
-
 ```
-###Lendo linha
+
+### Lendo linha
+
 ```python
 linha = '000001Joao Ferreira                 1999100100020000'
 teste = Header(string=linha)
@@ -59,7 +64,8 @@ teste.nascimento
 datetime.date(1999, 10, 1)
 ```
 
-###Escrevendo linha
+### Escrevendo linha
+
 ```python
 import datetime
 from decimal import Decimal
@@ -68,4 +74,3 @@ teste = Header(nome='Maria serena', nascimento=datetime.date(2000, 10, 2), salar
 teste.to_string()
 '000002Maria serena                  2000100200300000'
 ```
-

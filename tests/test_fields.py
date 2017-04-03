@@ -94,11 +94,11 @@ class TestDateField(TestField):
     def test_init_with_datetime(self):
         value = self.field.to_python(datetime.datetime(2016, 6, 4, 12, 0))
         self.assertEqual(value, self.value)
-        
+
     def test_init_with_date(self):
         value = self.field.to_python(self.value)
         self.assertEqual(value, self.value)
-        
+
     def test_to_python_should_raise_validation_error_with_invalid(self):
         with self.assertRaises(exceptions.ValidationError):
             self.field.to_python('avc')
